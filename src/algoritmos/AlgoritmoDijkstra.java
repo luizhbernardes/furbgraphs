@@ -76,7 +76,6 @@ public class AlgoritmoDijkstra {
             resultado.setCusto(v, Constante.INF);
             resultado.setPredecessor(v, null);
         }
-        JOptionPane.showConfirmDialog(null, s);
         branco.put(s, false);
         resultado.setCusto(s, 0.0);
 
@@ -91,13 +90,10 @@ public class AlgoritmoDijkstra {
 
             for (int i = 0; i < tamanhoGrafo; i++) {
                 Vertice verticeAtual = g.getVertice(i);
-                System.out.println("O vertice atual já foi visitado?\n" + verticeAtual);
                 if (branco.get(verticeAtual)) {
                     if (g.ehAdjacente(current, verticeAtual)) {
-                        System.out.println("Soma a distância do vertice anterior com o atual!\n" + dc + " + " + g.getCustoMinimo(current, verticeAtual));
                         novaDist = dc + g.getCustoMinimo(current, verticeAtual);
 
-                        System.out.println("A nova distância é menor que o custo do vertice atual?\n" + novaDist + " < " + resultado.getCusto(verticeAtual));
                         if (novaDist < resultado.getCusto(verticeAtual)) {
                             resultado.setCusto(verticeAtual, novaDist);
                             resultado.setPredecessor(verticeAtual, current);
@@ -108,12 +104,7 @@ public class AlgoritmoDijkstra {
                 }
             }
 
-            //System.out.println("Passou");
             branco.put(current, false);
-            System.out.println("Atual: " + current + " | branco? " + branco);
-            if (!branco.get(current)) {
-                JOptionPane.showConfirmDialog(null, "Verificando caminho através do vertice: " + current);
-            }
         }
     }
 }
