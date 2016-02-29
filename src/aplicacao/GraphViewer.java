@@ -715,11 +715,11 @@ public class GraphViewer extends JComponent {
                                     if (GraphViewer.this.debugAtivo) {
                                         GraphViewer.this.monitora_algoritmo(result_vertex, result_aresta);
                                     } else {
-                                        for (int y = result_vertex.size(); y > 0; y--) {
-                                            algoritmoDesenho.verticesMarcados.add(findVerticeVisual(result_vertex.get(y - 1)));
+                                        for (Vertice vertice : result_vertex) {
+                                            algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
                                         }
-                                        for (int y = result_vertex.size(); y > 0; y--) {
-                                            algoritmoDesenho.arestasMarcadas.add(findArestaVisual(result_aresta.get(y - 1)));
+                                        for (Aresta aresta : result_aresta) {
+                                            algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
                                         }
                                         GraphViewer.this.repaint();
                                     }
@@ -730,8 +730,16 @@ public class GraphViewer extends JComponent {
                                     if (existeCaminho) {
                                         String str = "Resultado Dijkstra:\n";
                                         for (Vertice vertice : result_vertex) {
-                                            str += vertice.getDado() + "\n";
-
+                                            for (Aresta aresta : result_aresta) {
+                                                if (aresta.getVi() == vertice) {
+                                                    str += vertice.getDado() + " > " + aresta.getDado() + " > " + aresta.getVj().getDado() + "\n";
+                                                    break;
+                                                }
+                                                if (aresta.getVj() == vertice) {
+                                                    str += vertice.getDado() + "\n";
+                                                    break;
+                                                }
+                                            }
                                         }
                                         new ResultadoFrame("Resultado Dijkstra", str);
                                     }
@@ -1145,17 +1153,19 @@ public class GraphViewer extends JComponent {
     }
 
     /**
+     * Metodo que monitora um algoritmo permitindo
+     * que o usuário avance ou retroceda nos passos do algoritmo
+     *
      * @param vertice_list
      * @param aresta_list
      */
     public void monitora_algoritmo(List<Vertice> vertice_list, List<Aresta> aresta_list) {
         int index_vertice, index_aresta = 0;
-        boolean voltou = false;
-        //vertice_list = (vertice_auxiliar.size() != 0) ? vertice_auxiliar : vertice_list;
-        //aresta_list = (aresta_auxiliar.size() != 0) ? aresta_auxiliar : aresta_list;
-
         int vertice_size = vertice_list.size();
         int aresta_size = aresta_list.size();
+
+        String str_step = "";
+        boolean voltou = false;
 
         vertice_size -= 1;
         algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice_list.get(vertice_size)));
@@ -1169,9 +1179,12 @@ public class GraphViewer extends JComponent {
 
             if (aresta_list.size() != 0 && aresta_list.size() != index_aresta) {
                 int opcao = 0;
-                opcao = JOptionPane.showConfirmDialog(null, "Deseja avançar para o próximo passo?\n" + aresta_list.get(index_aresta), "Execução do algoritmo..", JOptionPane.YES_NO_CANCEL_OPTION);
+                str_step = "Encontrado caminho para o vertice: " + vertice_list.get(index_vertice) + " através da aresta " + aresta_list.get(index_aresta);
+                str_step += "\nDeseja avançar para o próximo passo?\n";
+                opcao = JOptionPane.showConfirmDialog(null, str_step, "Execução do algoritmo..", JOptionPane.YES_NO_CANCEL_OPTION);
                 if (opcao == JOptionPane.NO_OPTION) {
-                    opcao = JOptionPane.showConfirmDialog(null, "Deseja retornar para o último passo executado?\n" + aresta_list.get(index_aresta), "Execução do algoritmo..", JOptionPane.YES_NO_OPTION);
+                    str_step = "Deseja retornar ao último passo executado?";
+                    opcao = JOptionPane.showConfirmDialog(null, str_step, "Execução do algoritmo..", JOptionPane.YES_NO_OPTION);
                     if (opcao == JOptionPane.NO_OPTION) {
                         return;
                     }
