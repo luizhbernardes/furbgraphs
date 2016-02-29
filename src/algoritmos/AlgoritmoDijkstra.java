@@ -3,8 +3,6 @@ package algoritmos;
 import java.util.HashMap;
 import java.util.PriorityQueue;
 
-import javax.swing.JOptionPane;
-
 import auxiliar.Constante;
 import auxiliar.PairPriority;
 import base.Grafo;
@@ -76,6 +74,7 @@ public class AlgoritmoDijkstra {
             resultado.setCusto(v, Constante.INF);
             resultado.setPredecessor(v, null);
         }
+
         branco.put(s, false);
         resultado.setCusto(s, 0.0);
 
