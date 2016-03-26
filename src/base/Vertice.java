@@ -3,12 +3,13 @@ package base;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Classe Vertice
- * 
+ *
  * @author Maicon Rafael Zatelli
- * 
+ *
  */
 public class Vertice implements Cloneable {
 
@@ -20,7 +21,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Construtor da classe Vertice
-     * 
+     *
      * @param id Identificador único do vértice
      * @throws Exception
      */
@@ -31,7 +32,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Retorna o identificador único do vértice
-     * 
+     *
      * @return id
      */
     public int getId() {
@@ -40,7 +41,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Retorna o dado do vértice
-     * 
+     *
      * @return dado
      */
     public Object getDado() {
@@ -49,7 +50,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Atribui um dado qualquer ao vértice
-     * 
+     *
      * @param dado
      */
     public void setDado(Object dado) {
@@ -58,7 +59,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Retorna a cor do vértice
-     * 
+     *
      * @return cor
      */
     public Color getCor() {
@@ -67,7 +68,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Atribui uma cor ao vértice
-     * 
+     *
      * @param cor
      */
     public void setCor(Color cor) {
@@ -76,7 +77,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Adiciona uma aresta ao vértice
-     * 
+     *
      * @param a
      *            Aresta
      */
@@ -87,7 +88,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Apaga uma aresta do vértice
-     * 
+     *
      * @param a
      *            Aresta
      */
@@ -100,7 +101,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Retorna uma aresta pela sua posição
-     * 
+     *
      * @param i
      *            Posição
      * @return Aresta
@@ -111,11 +112,26 @@ public class Vertice implements Cloneable {
 
     /**
      * Retorna a quantidade de arestas
-     * 
+     *
      * @return grau
      */
     public int getQtdeArestas() {
         return arestas.size();
+    }
+
+    /**
+     * @author Luiz Henrique bernardes
+     *         Retorna uma lista das arestas ligadas ao vertice
+     *
+     * @return temp_list
+     */
+    public List<Aresta> getArestaList() {
+        List<Aresta> temp_list = new ArrayList<>();
+        int qtd_aresta = this.getQtdeArestas();
+        for (int x = 0; x < qtd_aresta; x++) {
+            temp_list.add(this.getAresta(x));
+        }
+        return temp_list;
     }
 
     /**
@@ -147,7 +163,7 @@ public class Vertice implements Cloneable {
 
     /**
      * Retorna um clone do vertice
-     * 
+     *
      * @return Vertice
      */
     @Override

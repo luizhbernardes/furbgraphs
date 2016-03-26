@@ -122,7 +122,7 @@ public class GraphViewer extends JComponent {
     private JLabel labelValorVertice;
     private JLabel labelValorAresta;
     private JLabel labelDirecao;
-    private JScrollPane scrollPane;
+    private JScrollPane scrollPane, scrollPane2;
     private JLabel vertexNameLabel;
     private JLabel labelNameAresta;
     private JTextField vertexValueField;
@@ -130,11 +130,18 @@ public class GraphViewer extends JComponent {
     private JTextField nameArestaField;
     private JTextField edgeValueField;
     private JComboBox<String> direcaoComboField;
-    private JLabel statusLabel;
+    private JLabel statusLabel, debugLabel, espacoLabel, espacoLabel2;
     private JSpinner jspinner;
 
     private static AlgoritmoDesenho algoritmoDesenho = new AlgoritmoDesenho();
     private static IAlgoritmoExecutor algoritmoExecutor;
+
+    public List<Vertice> vertice_list = new ArrayList();
+    public List<Aresta> aresta_list = new ArrayList();
+    public List<Vertice> aux_vertice_list = new ArrayList();
+    public List<Aresta> aux_aresta_list = new ArrayList();
+    public int index_aresta, index_vertice = 0;
+    public List<Double> peso_list = new ArrayList();
 
     public boolean debugAtivo = false;
 
@@ -184,22 +191,64 @@ public class GraphViewer extends JComponent {
             public void run() {
                 JFrame f = new JFrame("FURB Graphs: uma aplicação para teoria dos grafos");
                 f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                GraphViewer gp = new GraphViewer();
+                final GraphViewer gp = new GraphViewer();
                 f.add(gp.control, BorderLayout.NORTH);
                 gp.scrollPane = new JScrollPane(gp);
                 gp.addKeyShortcut();
 
-                f.add(gp.scrollPane, BorderLayout.CENTER);
+                f.add(gp.scrollPane, BorderLayout.EAST);
 
-                // create the status bar panel and shove it down the bottom of the frame
+                JPanel statusPanel2 = new JPanel();
+
+                gp.scrollPane2 = new JScrollPane(gp);
+                statusPanel2.add(gp.scrollPane2);
+                f.add(statusPanel2, BorderLayout.WEST);
+                JTextArea emptyLabel = new JTextArea("Teste");
+                emptyLabel.setEditable(true);
+                gp.scrollPane2.add(emptyLabel);
+
                 JPanel statusPanel = new JPanel();
                 statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
                 f.add(statusPanel, BorderLayout.SOUTH);
-                statusPanel.setPreferredSize(new Dimension(f.getWidth(), 16));
+
+                statusPanel.setPreferredSize(new Dimension(f.getWidth(), 30));
                 statusPanel.setLayout(new BoxLayout(statusPanel, BoxLayout.X_AXIS));
-                gp.statusLabel = new JLabel("");
-                gp.statusLabel.setHorizontalAlignment(SwingConstants.LEFT);
+
+                //LUIZ - Criação das labels e botões para controle do DEBUG!!
+                gp.espacoLabel = new JLabel("     |     ");
+                gp.espacoLabel.setHorizontalAlignment(SwingConstants.LEFT);
+
+                gp.debugLabel = new JLabel("");
+                gp.debugLabel.setHorizontalAlignment(SwingConstants.LEFT);
+
+                gp.espacoLabel2 = new JLabel("     |     ");
+                gp.espacoLabel2.setHorizontalAlignment(SwingConstants.LEFT);
+
+                gp.statusLabel = new JLabel("                                                                       ");
+                gp.statusLabel.setHorizontalAlignment(SwingConstants.RIGHT);
                 gp.updateFooter();
+                StringBuilder teste = new StringBuilder();
+                teste.append("teste");
+
+                for (String str : " << , < , > , >> ".split(",")) {
+                    JButton bt = new JButton(str);
+                    bt.addActionListener(new ActionListener() {
+
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            JButton btCaminhar = (JButton) e.getSource();
+                            gp.debug_caminhar(btCaminhar);
+                            /*JButton t = new JButton("teste");
+                            t = (JButton) e.getSource();
+                            JOptionPane.showMessageDialog(null, t.getText());*/
+                        }
+                    });
+                    statusPanel.add(bt);
+                }
+
+                statusPanel.add(gp.espacoLabel);
+                statusPanel.add(gp.debugLabel);
+                statusPanel.add(gp.espacoLabel2);
                 statusPanel.add(gp.statusLabel);
 
                 JMenuBar menuBar = new JMenuBar();
@@ -238,6 +287,131 @@ public class GraphViewer extends JComponent {
             }
 
         });
+    }
+
+    private void debug_caminhar(JButton btCaminhar) {
+        if (btCaminhar.getText().equals(" << ")) {
+            this.debugLabel.setText("Atenção!! Voltou todos os passos do algoritmo <<");
+            this.index_aresta = 0;
+            this.index_vertice = 0;
+            this.algoritmoDesenho.verticesMarcados.clear();
+            this.algoritmoDesenho.arestasMarcadas.clear();
+            this.aux_vertice_list.clear();
+            this.aux_aresta_list.clear();
+            this.algoritmoDesenho.coresVertices.clear();
+            this.algoritmoDesenho.coresArestas.clear();
+
+        } else if (btCaminhar.getText().equals(" >> ")) {
+            this.debugLabel.setText("Atenção!! Avançou até o último passo do algoritmo >>");
+            for (Vertice v : this.vertice_list) {
+                this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(v));
+            }
+            for (Aresta a : this.aresta_list) {
+                this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(a));
+            }
+
+        } else if (btCaminhar.getText().equals(" > ")) {
+            this.debugLabel.setText("Atenção!! Avançou 1 passo do algoritmo >");
+
+            int temp_index_a = 0;
+            int temp_index_v = 0;
+
+            if (this.index_vertice < this.vertice_list.size()) {
+                this.index_vertice += 1;
+                temp_index_v = this.vertice_list.size() - this.index_vertice;
+                System.out.println("Index Vertice Atual: " + temp_index_v);
+                System.out.println("Adicionando um vertice!! " + this.vertice_list.get(temp_index_v).getDado());
+                this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(this.vertice_list.get(temp_index_v)));
+            }
+
+            if (this.index_aresta < this.aresta_list.size()) {
+                this.index_aresta += 1;
+                temp_index_a = this.aresta_list.size() - this.index_aresta;
+                System.out.println("Adicionando uma aresta!! " + this.aresta_list.get(temp_index_a).getValor());
+                this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(this.aresta_list.get(temp_index_a)));
+            }
+
+            if (!this.algoritmoDesenho.arestasMarcadas.contains(findVerticeVisual(this.vertice_list.get(temp_index_v)))) {
+                Vertice temp_vertice = this.vertice_list.get(temp_index_v);
+
+                for (Aresta temp_aresta : temp_vertice.getArestaList()) {
+
+                    if (!(temp_index_v == 0)) {
+                        if (!this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(temp_aresta))) {
+                            this.aux_aresta_list.add(temp_aresta);
+                            this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(temp_aresta));
+                            this.algoritmoDesenho.coresArestas.put(findArestaVisual(temp_aresta), Color.red);
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        throw new RuntimeException(e);
+                    }
+                    this.repaint();
+                }
+
+                for (Aresta temp_aresta : this.aux_aresta_list) {
+                    if (this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(temp_aresta))) {
+                        if (this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(temp_aresta.getVi())) && this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(temp_aresta.getVj()))) {
+                            this.algoritmoDesenho.coresArestas.put(findArestaVisual(temp_aresta), Color.gray);
+                            this.repaint();
+                        }
+                    }
+                }
+            }
+        } else {
+            this.debugLabel.setText("Atenção!! Voltou 1 passo do algoritmo <");
+            this.aux_aresta_list.clear();
+            this.aux_vertice_list.clear();
+
+            int temp_index_a = 0;
+            int temp_index_v = 0;
+
+            System.out.println("Vertice -> Index original: " + this.index_vertice);
+            if ((this.vertice_list.size() - this.index_vertice) < this.vertice_list.size()) {
+                temp_index_v = this.vertice_list.size() - this.index_vertice;
+                System.out.println("Vertice -> Index que vai remover: " + temp_index_v);
+                System.out.println("Vertice que vai remover: " + this.vertice_list.get(temp_index_v));
+                this.algoritmoDesenho.verticesMarcados.remove(findVerticeVisual(this.vertice_list.get(temp_index_v)));
+            }
+
+            System.out.println("Aresta -> Index original: " + this.index_aresta);
+            if ((this.aresta_list.size() - this.index_aresta) < this.aresta_list.size()) {
+                temp_index_a = this.aresta_list.size() - this.index_aresta;
+            }
+
+            Vertice temp_vertice = this.vertice_list.get(temp_index_v);
+
+            System.out.println(temp_vertice);
+            for (Aresta temp_aresta : temp_vertice.getArestaList()) {
+                System.out.println("======================================");
+                System.out.println(temp_aresta);
+
+                if (!this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(temp_aresta.getVj())) && !this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(temp_aresta.getVi()))) {
+                    System.out.println("Removeu a aresta: " + temp_aresta);
+                    this.algoritmoDesenho.arestasMarcadas.remove(findArestaVisual(temp_aresta));
+                }
+                System.out.println("======================================");
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    throw new RuntimeException(e);
+                }
+                this.repaint();
+            }
+            if (this.index_vertice > 0) {
+                this.index_vertice -= 1;
+            }
+
+            if (this.index_aresta > 0) {
+                this.index_aresta -= 1;
+            }
+        }
+        this.repaint();
     }
 
     /**
@@ -709,44 +883,48 @@ public class GraphViewer extends JComponent {
 
                                     }
                                     result_vertex.add(_v1);
-                                    //Adicionado o bloco abaixo como adapção do código original para que
-                                    //seja possível efetuar pausas da execução do algoritmo e permitir o
-                                    //controle do "passo a passa"
-                                    if (GraphViewer.this.debugAtivo) {
-                                        GraphViewer.this.monitora_algoritmo(result_vertex, result_aresta);
-                                    } else {
-                                        for (Vertice vertice : result_vertex) {
-                                            algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
-                                        }
-                                        for (Aresta aresta : result_aresta) {
-                                            algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
-                                        }
-                                        GraphViewer.this.repaint();
+
+                                    GraphViewer.this.vertice_list = result_vertex;
+                                    GraphViewer.this.aresta_list = result_aresta;
+
+                                    for (Vertice vertice : result_vertex) {
+                                        System.out.println(vertice.getDado());
+                                        algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
+                                    }
+                                    for (Aresta aresta : result_aresta) {
+                                        GraphViewer.this.peso_list.add(aresta.getValor());
+                                        algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
                                     }
 
-                                    Collections.reverse(result_vertex);
+                                    if (GraphViewer.this.debugAtivo) {
+                                        JOptionPane.showConfirmDialog(null, "A opção de Debug está ativa!\nPara acompanhar a execução do algoritmo utilize os botões de controle da parte inferior da tela (<< < > >>)");
+                                        //GraphViewer.this.monitora_algoritmo(result_vertex, result_aresta);
+                                        GraphViewer.this.repaint();
+                                    } else {
+                                        Collections.reverse(result_vertex);
 
-                                    // frame
-                                    if (existeCaminho) {
-                                        String str = "Resultado Dijkstra:\n";
-                                        for (Vertice vertice : result_vertex) {
-                                            for (Aresta aresta : result_aresta) {
-                                                if (aresta.getVi() == vertice) {
-                                                    str += vertice.getDado() + " > " + aresta.getDado() + " > " + aresta.getVj().getDado() + "\n";
-                                                    break;
-                                                }
-                                                if (aresta.getVj() == vertice) {
-                                                    str += vertice.getDado() + "\n";
-                                                    break;
+                                        // frame
+                                        if (existeCaminho) {
+                                            String str = "Resultado Dijkstra:\n";
+                                            for (Vertice vertice : result_vertex) {
+                                                for (Aresta aresta : result_aresta) {
+                                                    if (aresta.getVi() == vertice) {
+                                                        str += vertice.getDado() + " > " + aresta.getDado() + " > " + aresta.getVj().getDado() + "\n";
+                                                        break;
+                                                    }
+                                                    if (aresta.getVj() == vertice) {
+                                                        str += vertice.getDado() + "\n";
+                                                        break;
+                                                    }
                                                 }
                                             }
+                                            new ResultadoFrame("Resultado Dijkstra", str);
                                         }
-                                        new ResultadoFrame("Resultado Dijkstra", str);
-                                    }
 
-                                    algoritmoExecutor = null;
-                                    VerticeVisual.selectNone(vertexs);
-                                    GraphViewer.this.repaint();
+                                        algoritmoExecutor = null;
+                                        VerticeVisual.selectNone(vertexs);
+                                        GraphViewer.this.repaint();
+                                    }
                                 }
                             }
                         }
