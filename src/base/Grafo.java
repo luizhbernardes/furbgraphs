@@ -80,6 +80,19 @@ public abstract class Grafo implements Cloneable {
     }
 
     /**
+     * @author Luiz Henrique Bernardes
+     *         Retorna uma lista de todos os vertices do grafo
+     * @return temp_vertice
+     */
+    public List<Vertice> getVerticeList() {
+        List<Vertice> temp_list = new ArrayList();
+        for (int x = 0; x < this.getTamanho(); x++) {
+            temp_list.add(this.getVertice(x));
+        }
+        return temp_list;
+    }
+
+    /**
      * Retorna a quantidade de arestas do grafo incluindo as geradas pelo próprio.
      *
      * @return Quantidade de arestas
