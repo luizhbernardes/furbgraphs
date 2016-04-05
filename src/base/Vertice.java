@@ -18,6 +18,10 @@ public class Vertice implements Cloneable {
     private Color cor = new Color(0, 0, 0);
     private final ArrayList<Aresta> arestas = new ArrayList<Aresta>();
     private final HashMap<Integer, Aresta> idArestas = new HashMap<Integer, Aresta>();
+    public Vertice vertice_pai = null;
+    public Aresta aresta_pai = null;
+    //Custo total até o vertice
+    public Double custo_total = 0.0;
 
     /**
      * Construtor da classe Vertice
@@ -126,12 +130,54 @@ public class Vertice implements Cloneable {
      * @return temp_list
      */
     public List<Aresta> getArestaList() {
-        List<Aresta> temp_list = new ArrayList<>();
+        return arestas;
+        /*List<Aresta> temp_list = new ArrayList<>();
         int qtd_aresta = this.getQtdeArestas();
         for (int x = 0; x < qtd_aresta; x++) {
             temp_list.add(this.getAresta(x));
         }
+        return temp_list;*/
+    }
+
+    /**
+     * @author Luiz Henrique Bernardes
+     * @param custo
+     */
+    public void set_custo(Double custo) {
+        this.custo_total = custo;
+    }
+
+    /**
+     * @author Luiz Henrique Bernardes
+     * @return custo_total
+     */
+    public Double get_custo() {
+        return this.custo_total;
+    }
+
+    /**
+     * @author Luiz Henrique Bernardes
+     * @return
+     */
+    public List<Vertice> get_caminho() {
+        List<Vertice> temp_list = new ArrayList();
+        Vertice temp_v = this.vertice_pai;
+
+        while (temp_v != null) {
+            temp_list.add(temp_v);
+            temp_v = temp_v.vertice_pai;
+        }
         return temp_list;
+    }
+
+    /**
+     * @author Luiz Henrique Bernardes
+     * @param v
+     * @param a
+     */
+    public void setPai(Vertice v, Aresta a) {
+        this.vertice_pai = v;
+        this.aresta_pai = a;
     }
 
     /**
