@@ -210,16 +210,7 @@ public class GraphViewer extends JComponent {
                 gp.scrollPane = new JScrollPane(gp);
                 gp.addKeyShortcut();
 
-                f.add(gp.scrollPane, BorderLayout.EAST);
-
-                JPanel statusPanel2 = new JPanel();
-
-                gp.scrollPane2 = new JScrollPane(gp);
-                statusPanel2.add(gp.scrollPane2);
-                f.add(statusPanel2, BorderLayout.WEST);
-                JTextArea emptyLabel = new JTextArea("Teste");
-                emptyLabel.setEditable(true);
-                gp.scrollPane2.add(emptyLabel);
+                f.add(gp.scrollPane, BorderLayout.WEST);
 
                 JPanel statusPanel = new JPanel();
                 statusPanel.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -252,9 +243,6 @@ public class GraphViewer extends JComponent {
                         public void actionPerformed(ActionEvent e) {
                             JButton btCaminhar = (JButton) e.getSource();
                             gp.debug_caminhar(btCaminhar);
-                            /*JButton t = new JButton("teste");
-                            t = (JButton) e.getSource();
-                            JOptionPane.showMessageDialog(null, t.getText());*/
                         }
                     });
                     statusPanel.add(bt);
@@ -401,7 +389,7 @@ public class GraphViewer extends JComponent {
         }
 
         if (!this.vertice_proc_list.isEmpty()) {
-            System.out.println("Processando vertice: " + this.vertice_proc_list.get(0));
+            //System.out.println("Processando vertice: " + this.vertice_proc_list.get(0));
 
             if (!this.vertice_aux.equals(this.vertice_origem)) {
                 this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(this.vertice_proc_list.get(0)));
@@ -410,15 +398,15 @@ public class GraphViewer extends JComponent {
             this.vertice_proc_list.remove(0);
             this.repaint();
         } else if (!this.aresta_proc_list.isEmpty()) {
-            System.out.println("Processando aresta: " + this.aresta_proc_list.get(0));
+            //System.out.println("Processando aresta: " + this.aresta_proc_list.get(0));
             this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(this.aresta_proc_list.get(0)));
             this.algoritmoDesenho.coresArestas.put(findArestaVisual(this.aresta_proc_list.get(0)), Color.orange);
             this.aresta_proc_list.remove(0);
             this.repaint();
         } else if (!this.vertice_cmp_pai_atual_list.isEmpty() && !this.aresta_cmp_pai_atual_list.isEmpty()) {
-            System.out.println("Comparando vertices e arestas do antigo pai");
+            //System.out.println("Comparando vertices e arestas do antigo pai");
             //Percorre o caminho de vertices e arestas do pai atual até a origem
-            System.out.println(this.vertice_cmp_pai_atual_list);
+            //System.out.println(this.vertice_cmp_pai_atual_list);
             for (Vertice v : this.vertice_cmp_pai_atual_list) {
                 if (!this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(v))) {
                     this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(v));
@@ -429,7 +417,7 @@ public class GraphViewer extends JComponent {
             }
             this.vertice_cmp_pai_atual_list.clear();
 
-            System.out.println(this.aresta_cmp_pai_atual_list);
+            //System.out.println(this.aresta_cmp_pai_atual_list);
             for (Aresta a : this.aresta_cmp_pai_atual_list) {
                 if (!this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(a))) {
                     this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(a));
@@ -451,9 +439,10 @@ public class GraphViewer extends JComponent {
             }
             this.vertice_aux_list.clear();
             this.aresta_aux_list.clear();
+
         } else if (!this.vertice_cmp_pai_novo_list.isEmpty() && !this.aresta_cmp_pai_novo_list.isEmpty()) {
-            System.out.println("Comparando vertices e arestas do novo pai");
-            System.out.println(this.vertice_cmp_pai_novo_list);
+            //System.out.println("Comparando vertices e arestas do novo pai");
+            //System.out.println(this.vertice_cmp_pai_novo_list);
             //Percorre o caminho de vertices e arestas do pai novo até a origem
             for (Vertice v : this.vertice_cmp_pai_novo_list) {
                 if (!this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(v))) {
@@ -462,10 +451,9 @@ public class GraphViewer extends JComponent {
                 }
                 this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
                 this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.cyan);
-
             }
             this.vertice_cmp_pai_novo_list.clear();
-            System.out.println(this.aresta_cmp_pai_novo_list);
+            //System.out.println(this.aresta_cmp_pai_novo_list);
             for (Aresta a : this.aresta_cmp_pai_novo_list) {
                 if (!this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(a))) {
                     this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(a));
@@ -486,6 +474,7 @@ public class GraphViewer extends JComponent {
             }
             this.vertice_aux_list.clear();
             this.aresta_aux_list.clear();
+
         } else {
             System.out.println("Adicionando vertice: " + this.vertice_aux);
             if (!this.vertice_aux.equals(this.vertice_origem)) {
@@ -494,7 +483,8 @@ public class GraphViewer extends JComponent {
 
             for (Aresta a : this.vertice_aux.getArestaList()) {
                 if (!this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(a))) {
-                    System.out.println("Adicionando aresta: " + a);
+                    //System.out.println("VERTICE: " + this.vertice_aux);
+                    //System.out.println("Adicionando aresta: " + a);
                     this.aresta_proc_list.add(a);
 
                     if (!this.vertice_aux.equals(this.vertice_origem)) {
@@ -515,14 +505,41 @@ public class GraphViewer extends JComponent {
 
                         for (Aresta aux : this.vertice_aux.vertice_pai.getArestaList()) {
                             if (!this.aresta_list.contains(aux)) {
-                                System.out.println("Pintando de vermelho a aresta: " + aux);
+                                //System.out.println("Pintando de vermelho a aresta: " + aux);
                                 this.algoritmoDesenho.coresArestas.remove(findArestaVisual(aux));
                                 this.algoritmoDesenho.coresArestas.put(findArestaVisual(aux), Color.red);
                             }
                         }
+
+                        for (Aresta aux : this.vertice_aux.getArestaList()) {
+                            if (!this.aresta_list.contains(aux) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(aux))) {
+                                //System.out.println("Pintando de vermelho a aresta: " + aux);
+                                this.algoritmoDesenho.coresArestas.remove(findArestaVisual(aux));
+                                this.algoritmoDesenho.coresArestas.put(findArestaVisual(aux), Color.red);
+                            }
+                        }
+
+                        for (Aresta a2 : this.vertice_aux.vertice_pai.getArestaList()) {
+                            //System.out.println(a2);
+                            Vertice v_destino2 = (a2.getVi().equals(this.vertice_aux.vertice_pai) ? a2.getVj() : a2.getVi());
+                            //System.out.println(v_destino2);
+                            if (v_destino2.vertice_pai == null && !v_destino2.equals(this.vertice_origem)) {
+                                //System.out.println("Adicionou o " + this.vertice_aux.vertice_pai + " como pai de " + v_destino2);
+                                //Se não tem pai, adiciona o vertice atual como pai
+                                System.out.println("Set pai de cima");
+                                v_destino2.setPai(this.vertice_aux.vertice_pai, a2);
+
+                                //Seta o custo como Custo da aresta + Custo do pai
+                                v_destino2.set_custo(a2.getValor() + this.vertice_aux.vertice_pai.get_custo());
+                            }
+                            //System.out.println("CAMINHO: " + v_destino2.get_caminho());
+                        }
                         this.repaint();
                     }
                     Vertice v_destino = (a.getVi().equals(this.vertice_aux) ? a.getVj() : a.getVi());
+                    //System.out.println("VERTICE AUX: " + this.vertice_aux);
+                    //System.out.println("VERTICE AUX PAI: " + this.vertice_aux.vertice_pai);
+                    //System.out.println("VERTICE DESTINO: " + v_destino);
 
                     //Se não for o vertice de origem
                     if (!v_destino.equals(this.vertice_origem)) {
@@ -530,9 +547,10 @@ public class GraphViewer extends JComponent {
                         //Se não é o vertice de origem e o pai é nulo
                         //então o vertice não tem pai
                         if (v_destino.vertice_pai == null) {
-                            System.out.println(v_destino + " não tem pai!");
-                            System.out.println("Setando como pai o vertice: " + this.vertice_aux + " e aresta: " + a);
+                            //System.out.println(v_destino + " não tem pai!");
+                            //System.out.println("Setando como pai o vertice: " + this.vertice_aux + " e aresta: " + a);
 
+                            System.out.println("Set pai sem pai");
                             //Se não tem pai, adiciona o vertice atual como pai
                             v_destino.setPai(this.vertice_aux, a);
 
@@ -540,18 +558,18 @@ public class GraphViewer extends JComponent {
                             v_destino.set_custo(a.getValor() + this.vertice_aux.get_custo());
 
                             //Percorre o caminho de vertices do pai novo até a origem
-                            System.out.println(v_destino);
+                            //System.out.println(v_destino);
                             //this.vertice_cmp_pai_novo_list.add(v_destino);
                             //this.aresta_cmp_pai_novo_list.add(a);
                             this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
                             //Percorre o caminho de vertices do pai novo até a origem
-                            System.out.println("CAMINHO NOVO");
+                            //System.out.println("CAMINHO NOVO 123");
                             for (Vertice v : v_destino.get_caminho()) {
                                 if (!this.vertice_cmp_pai_novo_list.contains(v)) {
-                                    System.out.println("ADICIONOU O VERTICE: " + v);
+                                    //System.out.println("ADICIONOU O VERTICE: " + v);
                                     this.vertice_cmp_pai_novo_list.add(v);
-                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai)) {
-                                        System.out.println("ADICIONOU A ARESTA: " + v.aresta_pai);
+                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(v.aresta_pai))) {
+                                        //System.out.println("ADICIONOU A ARESTA: " + v.aresta_pai);
                                         this.aresta_cmp_pai_novo_list.add(v.aresta_pai);
                                     }
                                 }
@@ -560,29 +578,33 @@ public class GraphViewer extends JComponent {
                         } else {
                             //Se o pai não é nulo, ele tem pai
                             //Fazer comparação
-                            System.out.println(v_destino + " tem pai");
+                            //System.out.println(v_destino + " tem pai");
 
                             Vertice pai_atual = v_destino.vertice_pai;
-                            System.out.println("Pai atual: " + pai_atual);
+                            //System.out.println("Pai atual: " + pai_atual);
 
                             if (!this.aresta_cmp_pai_novo_list.contains(v_destino.aresta_pai)) {
+                                System.out.println("NÃO TINHA NO NOVO: " + v_destino.aresta_pai);
                                 this.aresta_cmp_pai_atual_list.add(v_destino.aresta_pai);
                             }
-                            System.out.println("CAMINHO ATUAL");
+                            //System.out.println("CAMINHO ATUAL " + this.vertice_aux);
+                            //System.out.println("Caminho verdadeiro: " + this.vertice_aux.get_caminho());
                             for (Vertice v : v_destino.get_caminho()) {
                                 if (!this.vertice_cmp_pai_atual_list.contains(v)) {
-                                    System.out.println("ADICIONOU O VERTICE: " + v);
+                                    //System.out.println("ADICIONOU O VERTICE: " + v);
+
                                     this.vertice_cmp_pai_atual_list.add(v);
-                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_atual_list.contains(v.aresta_pai)) {
-                                        System.out.println("ADICIONOU A RESTA: " + v.aresta_pai);
+                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_atual_list.contains(v.aresta_pai) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(v.aresta_pai))) {
+                                        //System.out.println("ADICIONOU A RESTA: " + v.aresta_pai);
                                         this.aresta_cmp_pai_atual_list.add(v.aresta_pai);
                                     }
                                 }
                             }
 
                             if ((this.vertice_aux.get_custo() + a.getValor()) < v_destino.get_custo()) {
-                                System.out.println("Encontrou um novo pai: " + this.vertice_aux);
+                                //System.out.println("Encontrou um novo pai: " + this.vertice_aux + " para: " + v_destino);
                                 //Se não tem pai, adiciona o vertice atual como pai
+                                System.out.println("Set pai novo");
                                 v_destino.setPai(this.vertice_aux, a);
 
                                 //Seta o custo como Custo da aresta + Custo do pai
@@ -591,13 +613,13 @@ public class GraphViewer extends JComponent {
 
                             this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
                             //Percorre o caminho de vertices do pai novo até a origem
-                            System.out.println("CAMINHO NOVO");
+                            //System.out.println("CAMINHO NOVO");
                             for (Vertice v : v_destino.get_caminho()) {
                                 if (!this.vertice_cmp_pai_novo_list.contains(v)) {
-                                    System.out.println("ADICIONOU O VERTICE: " + v);
+                                    //System.out.println("ADICIONOU O VERTICE: " + v);
                                     this.vertice_cmp_pai_novo_list.add(v);
                                     if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai)) {
-                                        System.out.println("ADICIONOU A ARESTA: " + v.aresta_pai);
+                                        //System.out.println("ADICIONOU A ARESTA: " + v.aresta_pai);
                                         this.aresta_cmp_pai_novo_list.add(v.aresta_pai);
                                     }
                                 }
