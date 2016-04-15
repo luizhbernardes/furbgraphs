@@ -122,7 +122,7 @@ public class GraphViewer extends JComponent {
     private JLabel labelValorVertice;
     private JLabel labelValorAresta;
     private JLabel labelDirecao;
-    private JScrollPane scrollPane, scrollPane2;
+    private JScrollPane scrollPane;
     private JLabel vertexNameLabel;
     private JLabel labelNameAresta;
     private JTextField vertexValueField;
@@ -142,6 +142,9 @@ public class GraphViewer extends JComponent {
     public List<Vertice> vertice_list = new ArrayList();
     public List<Aresta> aresta_list = new ArrayList();
 
+    public List<Vertice> vertice_menor_caminho_list = new ArrayList();
+    public List<Aresta> aresta_menor_caminho_list = new ArrayList();
+
     public List<Vertice> vertice_proc_list = new ArrayList();
     public List<Aresta> aresta_proc_list = new ArrayList();
 
@@ -154,9 +157,13 @@ public class GraphViewer extends JComponent {
     public List<Vertice> vertice_restricao_list = new ArrayList();
     public List<Aresta> aresta_restricao_list = new ArrayList();
 
+    public List<Vertice> vertice_black_list = new ArrayList();
+
+    public Vertice vertice_aux = null;
+    public Vertice vertice_anterior = null;
     public Vertice vertice_origem = null;
     public Vertice vertice_destino = null;
-    public Vertice vertice_aux = null;
+
     public int index_aresta, index_vertice = 0;
     public boolean BFS = false;
     public boolean DFS = false;
@@ -298,12 +305,26 @@ public class GraphViewer extends JComponent {
     private void debug_caminhar(JButton btCaminhar) {
         if (btCaminhar.getText().equals(" << ")) {
             this.debugLabel.setText("Atenção!! Voltou todos os passos do algoritmo <<");
-            this.index_aresta = 0;
-            this.index_vertice = 0;
+
+            this.vertice_aux_list.clear();
+            this.aresta_aux_list.clear();
+            this.vertice_proc_list.clear();
+            this.aresta_proc_list.clear();
+            this.vertice_cmp_pai_atual_list.clear();
+            this.aresta_cmp_pai_atual_list.clear();
+            this.vertice_cmp_pai_novo_list.clear();
+            this.aresta_cmp_pai_novo_list.clear();
+            this.vertice_restricao_list.clear();
+            this.aresta_restricao_list.clear();
+            this.vertice_aux = null;
             this.algoritmoDesenho.verticesMarcados.clear();
             this.algoritmoDesenho.arestasMarcadas.clear();
             this.algoritmoDesenho.coresVertices.clear();
             this.algoritmoDesenho.coresArestas.clear();
+            for (Vertice v : this.g().getVerticeList()) {
+                v.setPai(null, null);
+                v.set_custo(0.0);
+            }
 
         } else if (btCaminhar.getText().equals(" >> ")) {
             this.debugLabel.setText("Atenção!! Avançou até o último passo do algoritmo >>");
@@ -322,8 +343,11 @@ public class GraphViewer extends JComponent {
                 }
             }
         } else if (btCaminhar.getText().equals(" > ")) {
+            this.debugLabel.setText("Atenção!! Avançou 1 passo do algoritmo >");
             if (this.DIJKSTRA) {
                 this.avanca_dijkstra();
+            } else if (this.BFS) {
+                this.avanca_bfs();
             }
         } else {
             this.retorna();
@@ -333,49 +357,151 @@ public class GraphViewer extends JComponent {
 
     public void retorna() {
         this.debugLabel.setText("Atenção!! Voltou 1 passo do algoritmo <");
+        Vertice dest = this.vertice_aux;
 
-        int temp_index_a = 0;
-        int temp_index_v = 0;
+        if (this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(this.vertice_aux))) {
+            this.algoritmoDesenho.verticesMarcados.remove(findVerticeVisual(this.vertice_aux));
+            this.algoritmoDesenho.arestasMarcadas.remove(findArestaVisual(this.vertice_aux.aresta_pai));
+            this.algoritmoDesenho.coresArestas.remove(findArestaVisual(this.vertice_aux.aresta_pai));
+            this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_aux));
+        } else {
+            this.algoritmoDesenho.verticesMarcados.remove(findVerticeVisual(this.vertice_aux.vertice_pai));
+            this.algoritmoDesenho.arestasMarcadas.remove(findArestaVisual(this.vertice_aux.vertice_pai.aresta_pai));
+            this.algoritmoDesenho.coresArestas.remove(findArestaVisual(this.vertice_aux.vertice_pai.aresta_pai));
+            this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_aux.vertice_pai));
 
-        System.out.println("Vertice -> Index original: " + this.index_vertice);
-        if ((this.vertice_list.size() - this.index_vertice) < this.vertice_list.size()) {
-            temp_index_v = this.vertice_list.size() - this.index_vertice;
-            System.out.println("Vertice -> Index que vai remover: " + temp_index_v);
-            System.out.println("Vertice que vai remover: " + this.vertice_list.get(temp_index_v));
-            this.algoritmoDesenho.verticesMarcados.remove(findVerticeVisual(this.vertice_list.get(temp_index_v)));
+            dest = this.vertice_aux.vertice_pai;
+        }
+        this.repaint();
+
+        this.vertice_proc_list.clear();
+        this.aresta_proc_list.clear();
+        this.vertice_cmp_pai_atual_list.clear();
+        this.aresta_cmp_pai_atual_list.clear();
+        this.vertice_cmp_pai_novo_list.clear();
+        this.aresta_cmp_pai_novo_list.clear();
+
+        this.vertice_aux.setPai(null, null);
+        this.vertice_aux.set_custo(0.0);
+
+        this.vertice_aux = dest.vertice_pai;
+    }
+
+    public void avanca_bfs() {
+        if (this.vertice_aux == null) {
+            this.vertice_aux = this.vertice_origem;
         }
 
-        System.out.println("Aresta -> Index original: " + this.index_aresta);
-        if ((this.aresta_list.size() - this.index_aresta) < this.aresta_list.size()) {
-            temp_index_a = this.aresta_list.size() - this.index_aresta;
-        }
+        if (!this.vertice_proc_list.isEmpty()) {
+            System.out.println("=============================================================");
+            System.out.println("Principal > " + this.vertice_aux);
 
-        Vertice temp_vertice = this.vertice_list.get(temp_index_v);
+            this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(this.vertice_aux));
+            this.algoritmoDesenho.coresVertices.put(findVerticeVisual(this.vertice_aux), Color.gray);
 
-        System.out.println(temp_vertice);
-        for (Aresta temp_aresta : temp_vertice.getArestaList()) {
-            System.out.println("======================================");
-            System.out.println(temp_aresta);
+            //Percorre a lista de destinos para colorir
+            for (Vertice v_destino : this.vertice_proc_list) {
+                if (!this.vertice_aux_list.contains(v_destino) && !this.vertice_black_list.contains(v_destino)) {
+                    System.out.println("Vertice destino " + v_destino);
+                    //Colore de laranja
+                    this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(v_destino));
+                    this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v_destino), Color.gray);
 
-            if (!this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(temp_aresta.getVj())) && !this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(temp_aresta.getVi()))) {
-                System.out.println("Removeu a aresta: " + temp_aresta);
-                this.algoritmoDesenho.arestasMarcadas.remove(findArestaVisual(temp_aresta));
+                    this.vertice_aux_list.add(v_destino);
+                }
             }
-            System.out.println("======================================");
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                throw new RuntimeException(e);
+            this.vertice_proc_list.clear();
+
+            int count = 0;
+            for (Aresta a : this.vertice_aux.getArestaList()) {
+                Vertice v_destino = (a.getVi() == this.vertice_aux ? a.getVj() : a.getVi());
+                if (this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(v_destino))) {
+                    count += 1;
+                }
+            }
+            if (count == this.vertice_aux.getQtdeArestas()) {
+                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_aux));
+                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(this.vertice_aux), Color.black);
+                this.vertice_black_list.add(this.vertice_aux);
+            }
+
+            for (Vertice v : this.vertice_aux_list) {
+                count = 0;
+                for (Aresta a : v.getArestaList()) {
+                    Vertice v_destino = (a.getVi() == v ? a.getVj() : a.getVi());
+
+                    if (this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(v_destino))) {
+                        System.out.println("DESTINO MARCADO " + v_destino.getDado());
+                        count += 1;
+                    }
+                }
+                if (count == v.getArestaList().size() && !this.vertice_black_list.contains(v)) {
+                    System.out.println("PINTANDO DE CINZA " + v);
+                    this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
+                    this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.gray);
+                    this.vertice_restricao_list.add(v);
+                }
             }
             this.repaint();
-        }
-        if (this.index_vertice > 0) {
-            this.index_vertice -= 1;
-        }
+            System.out.println("=============================================================");
+            //Busca o próximo vertice
+            Vertice prox_vertice = this.vertice_aux_list.get(0);
 
-        if (this.index_aresta > 0) {
-            this.index_aresta -= 1;
+            //Pega o próximo vertice
+            this.vertice_aux = prox_vertice;
+
+            //Remove o próximo vertice da lista de processamento
+            this.vertice_aux_list.remove(prox_vertice);
+
+        } else if (!this.vertice_restricao_list.isEmpty()) {
+            for (Vertice v : this.vertice_restricao_list) {
+                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
+                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.black);
+                this.vertice_black_list.add(v);
+            }
+            this.vertice_restricao_list.clear();
+        } else {
+            System.out.println("=============================================================");
+            if (this.vertice_anterior != null) {
+                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_anterior));
+                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(this.vertice_anterior), Color.black);
+                this.vertice_anterior = null;
+            }
+
+            //Colore o vertice principal
+            if (this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(this.vertice_aux))) {
+                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_aux));
+                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(this.vertice_aux), Color.green);
+            } else {
+                this.algoritmoDesenho.verticesMarcados.add(findVerticeVisual(this.vertice_aux));
+                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(this.vertice_aux), Color.green);
+            }
+
+            System.out.println("Processando vertice principal! " + this.vertice_aux.getDado());
+            //Percorre as arestas do vertice principal
+            for (Aresta a : this.vertice_aux.getArestaList()) {
+                //Encontra o destino
+                Vertice v_destino = (a.getVi() == this.vertice_aux ? a.getVj() : a.getVi());
+
+                //Se o vertice destino não constar na lista de processamento
+                if (!this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(v_destino))) {
+                    //Adiciona o vertice a lista dos vertices processados
+                    System.out.println("Adicionando vertice " + v_destino + " aos vertices processados");
+                    this.vertice_proc_list.add(v_destino);
+                }
+            }
+            if (this.vertice_proc_list.isEmpty()) {
+                this.vertice_anterior = this.vertice_aux;
+
+                Vertice prox_vertice = this.vertice_aux_list.get(0);
+
+                //Pega o próximo vertice
+                this.vertice_aux = prox_vertice;
+
+                //Remove o próximo vertice da lista de processamento
+                this.vertice_aux_list.remove(prox_vertice);
+            }
+            System.out.println("=============================================================");
         }
     }
 
@@ -384,7 +510,6 @@ public class GraphViewer extends JComponent {
      *
      */
     public void avanca_dijkstra() {
-        this.debugLabel.setText("Atenção!! Avançou 1 passo do algoritmo >");
 
         if (this.vertice_aux == null) {
             this.vertice_aux = this.vertice_origem;
@@ -477,6 +602,7 @@ public class GraphViewer extends JComponent {
 
             this.aresta_cmp_pai_novo_list.clear();
             this.repaint();
+
             for (Vertice v : this.vertice_aux_list) {
                 this.algoritmoDesenho.verticesMarcados.remove(findVerticeVisual(v));
                 this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
@@ -575,14 +701,14 @@ public class GraphViewer extends JComponent {
                             }
                         }
 
-                        /*for (Vertice v_aux : this.vertice_restricao_list) {
+                        for (Vertice v_aux : this.vertice_restricao_list) {
                             for (Aresta a_aux : v_aux.getArestaList()) {
                                 if (!this.aresta_list.contains(a_aux) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(a_aux))) {
                                     this.algoritmoDesenho.coresArestas.remove(findArestaVisual(a_aux));
                                     this.algoritmoDesenho.coresArestas.put(findArestaVisual(a_aux), Color.orange);
                                 }
                             }
-                        }*/
+                        }
 
                         for (Aresta a2 : this.vertice_aux.vertice_pai.getArestaList()) {
                             Vertice v_destino2 = (a2.getVi().equals(this.vertice_aux.vertice_pai) ? a2.getVj() : a2.getVi());
@@ -612,45 +738,42 @@ public class GraphViewer extends JComponent {
                             v_destino.set_custo(a.getValor() + this.vertice_aux.get_custo());
 
                             if (!this.vertice_restricao_list.contains(v_destino)) {
-                                this.aresta_list.add(v_destino.aresta_pai);
-                            }
-                            //Percorre o caminho de vertices do pai novo até a origem
-                            this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
-                            //Percorre o caminho de vertices do pai novo até a origem
 
-                            for (Vertice v : v_destino.get_caminho()) {
-                                if (!this.vertice_cmp_pai_novo_list.contains(v)) {
+                                //Percorre o caminho de vertices do pai novo até a origem
+                                this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
 
-                                    this.vertice_cmp_pai_novo_list.add(v);
-                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(v.aresta_pai))) {
-                                        this.aresta_cmp_pai_novo_list.add(v.aresta_pai);
+                                //Percorre o caminho de vertices do pai novo até a origem
+                                for (Vertice v : v_destino.get_caminho()) {
+                                    if (!this.vertice_cmp_pai_novo_list.contains(v)) {
+
+                                        this.vertice_cmp_pai_novo_list.add(v);
+                                        if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(v.aresta_pai))) {
+                                            this.aresta_cmp_pai_novo_list.add(v.aresta_pai);
+                                        }
                                     }
                                 }
                             }
-                            //}
                         } else {
                             //Se o pai não é nulo, ele tem pai
                             //Fazer comparação
 
                             Vertice pai_atual = v_destino.vertice_pai;
-                            //if (!this.vertice_restricao_list.contains(v_destino)) {
                             if (!this.vertice_restricao_list.contains(v_destino)) {
-                                this.aresta_list.remove(v_destino.aresta_pai);
-                            }
-                            if (!this.aresta_cmp_pai_novo_list.contains(v_destino.aresta_pai)) {
-                                this.aresta_cmp_pai_atual_list.add(v_destino.aresta_pai);
-                            }
 
-                            for (Vertice v : v_destino.get_caminho()) {
-                                if (!this.vertice_cmp_pai_atual_list.contains(v) && !this.vertice_cmp_pai_novo_list.contains(v)) {
+                                if (!this.aresta_cmp_pai_novo_list.contains(v_destino.aresta_pai)) {
+                                    this.aresta_cmp_pai_atual_list.add(v_destino.aresta_pai);
+                                }
 
-                                    this.vertice_cmp_pai_atual_list.add(v);
-                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_atual_list.contains(v.aresta_pai) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(v.aresta_pai))) {
-                                        this.aresta_cmp_pai_atual_list.add(v.aresta_pai);
+                                for (Vertice v : v_destino.get_caminho()) {
+                                    if (!this.vertice_cmp_pai_atual_list.contains(v) && !this.vertice_cmp_pai_novo_list.contains(v)) {
+
+                                        this.vertice_cmp_pai_atual_list.add(v);
+                                        if (v.aresta_pai != null && !this.aresta_cmp_pai_atual_list.contains(v.aresta_pai) && this.algoritmoDesenho.arestasMarcadas.contains(findArestaVisual(v.aresta_pai))) {
+                                            this.aresta_cmp_pai_atual_list.add(v.aresta_pai);
+                                        }
                                     }
                                 }
                             }
-                            //}
 
                             if ((this.vertice_aux.get_custo() + a.getValor()) < v_destino.get_custo()) {
                                 //Se não tem pai, adiciona o vertice atual como pai
@@ -661,22 +784,18 @@ public class GraphViewer extends JComponent {
                             }
 
                             if (!this.vertice_restricao_list.contains(v_destino)) {
-                                this.aresta_list.add(v_destino.aresta_pai);
-                            }
+                                this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
+                                //Percorre o caminho de vertices do pai novo até a origem
 
-                            //if (!this.vertice_restricao_list.contains(v_destino)) {
-                            this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
-                            //Percorre o caminho de vertices do pai novo até a origem
-
-                            for (Vertice v : v_destino.get_caminho()) {
-                                if (!this.vertice_cmp_pai_novo_list.contains(v)) {
-                                    this.vertice_cmp_pai_novo_list.add(v);
-                                    if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai)) {
-                                        this.aresta_cmp_pai_novo_list.add(v.aresta_pai);
+                                for (Vertice v : v_destino.get_caminho()) {
+                                    if (!this.vertice_cmp_pai_novo_list.contains(v)) {
+                                        this.vertice_cmp_pai_novo_list.add(v);
+                                        if (v.aresta_pai != null && !this.aresta_cmp_pai_novo_list.contains(v.aresta_pai)) {
+                                            this.aresta_cmp_pai_novo_list.add(v.aresta_pai);
+                                        }
                                     }
                                 }
                             }
-                            //}
                         }
                     }
                     if (this.aresta_list.contains(a)) {
@@ -1058,6 +1177,7 @@ public class GraphViewer extends JComponent {
                                     Grafo g = g();
 
                                     Vertice _v1 = g.getVerticeById(v1.id);
+                                    GraphViewer.this.vertice_origem = _v1;
 
                                     AlgoritmoBuscaLargura dfs = new AlgoritmoBuscaLargura();
                                     dfs.executar(g, _v1);
@@ -1084,16 +1204,16 @@ public class GraphViewer extends JComponent {
                                         }
                                     }
 
-                                    for (Vertice vertice : GraphViewer.this.vertice_list) {
-                                        algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
-                                    }
-                                    /*for (Aresta aresta : GraphViewer.this.aresta_list) {
-                                        GraphViewer.this.peso_list.add(aresta.getValor());
-                                        algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
-                                    }*/
-
                                     if (GraphViewer.this.debugAtivo) {
                                         JOptionPane.showMessageDialog(null, "A opção de Debug está ativa!\nPara acompanhar a execução do algoritmo utilize os botões de controle da parte inferior da tela (<< < > >>)");
+                                        GraphViewer.this.repaint();
+                                    } else {
+                                        for (Vertice vertice : GraphViewer.this.vertice_list) {
+                                            algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
+                                        }
+                                        for (Aresta aresta : GraphViewer.this.aresta_list) {
+                                            algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
+                                        }
                                         GraphViewer.this.repaint();
                                     }
 
@@ -1189,16 +1309,15 @@ public class GraphViewer extends JComponent {
                                         }
                                     }
 
-                                    for (Vertice vertice : GraphViewer.this.vertice_list) {
-                                        algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
-                                    }
-                                    for (Aresta aresta : GraphViewer.this.aresta_list) {
-                                        //GraphViewer.this.peso_list.add(aresta.getValor());
-                                        algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
-                                    }
-
                                     if (GraphViewer.this.debugAtivo) {
                                         JOptionPane.showMessageDialog(null, "A opção de Debug está ativa!\nPara acompanhar a execução do algoritmo utilize os botões de controle da parte inferior da tela (<< < > >>)");
+                                    } else {
+                                        for (Vertice vertice : GraphViewer.this.vertice_list) {
+                                            algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
+                                        }
+                                        for (Aresta aresta : GraphViewer.this.aresta_list) {
+                                            algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
+                                        }
                                         GraphViewer.this.repaint();
                                     }
                                     new ResultadoFrame("Resultado Busca Profundidade", str);
@@ -1375,17 +1494,8 @@ public class GraphViewer extends JComponent {
                                     GraphViewer.this.vertice_list = result_vertex;
                                     GraphViewer.this.aresta_list = result_aresta;
 
-                                    //for (Vertice vertice : result_vertex) {
-                                    //    System.out.println(vertice.getDado());
-                                    //    algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
-                                    //}
-                                    //for (Aresta aresta : result_aresta) {
-                                    //    algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
-                                    //}
-
                                     if (GraphViewer.this.debugAtivo) {
                                         JOptionPane.showConfirmDialog(null, "A opção de Debug está ativa!\nPara acompanhar a execução do algoritmo utilize os botões de controle da parte inferior da tela (<< < > >>)");
-                                        //GraphViewer.this.repaint();
                                     } else {
                                         Collections.reverse(result_vertex);
 
@@ -1405,6 +1515,14 @@ public class GraphViewer extends JComponent {
                                                 }
                                             }
                                             new ResultadoFrame("Resultado Dijkstra", str);
+                                        }
+
+                                        for (Vertice vertice : result_vertex) {
+                                            System.out.println(vertice.getDado());
+                                            algoritmoDesenho.verticesMarcados.add(findVerticeVisual(vertice));
+                                        }
+                                        for (Aresta aresta : result_aresta) {
+                                            algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aresta));
                                         }
 
                                         algoritmoExecutor = null;
@@ -2892,11 +3010,20 @@ public class GraphViewer extends JComponent {
         @Override
         public void actionPerformed(ActionEvent e) {
             int opcao = 0;
-            opcao = JOptionPane.showConfirmDialog(null, "Deseja ativar a opção de Degub?\n*Esta função está habilitada para os algoritmos de Dijkstra, BFS e DFS", "Ativar opção de Debug", JOptionPane.YES_NO_OPTION);
-            if (opcao == JOptionPane.YES_OPTION) {
-                debugAtivo = true;
+            if (debugAtivo) {
+                opcao = JOptionPane.showConfirmDialog(null, "Opção de Debug já ativa!!\nDeseja desativar esta opção?", "Ativar opção de Debug", JOptionPane.YES_NO_OPTION);
+                if (opcao == JOptionPane.YES_OPTION) {
+                    debugAtivo = false;
+                } else {
+                    debugAtivo = true;
+                }
             } else {
-                debugAtivo = false;
+                opcao = JOptionPane.showConfirmDialog(null, "Deseja ativar a opção de Debug?\n*Esta função está habilitada para os algoritmos de Dijkstra, BFS e DFS", "Ativar opção de Debug", JOptionPane.YES_NO_OPTION);
+                if (opcao == JOptionPane.YES_OPTION) {
+                    debugAtivo = true;
+                } else {
+                    debugAtivo = false;
+                }
             }
         }
     }
