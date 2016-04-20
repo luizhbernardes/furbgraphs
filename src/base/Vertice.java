@@ -18,10 +18,17 @@ public class Vertice implements Cloneable {
     private Color cor = new Color(0, 0, 0);
     private final ArrayList<Aresta> arestas = new ArrayList<Aresta>();
     private final HashMap<Integer, Aresta> idArestas = new HashMap<Integer, Aresta>();
+
+    //Vertice pai do vertie
     public Vertice vertice_pai = null;
+    //Aresta pai do vertice
     public Aresta aresta_pai = null;
     //Custo total até o vertice
     public Double custo_total = 0.0;
+    //Tempo de abertura do vertice
+    public int temp_abertura = 0;
+    //Tempo de fechamento do vertice
+    public int temp_fechamento = 0;
 
     /**
      * Construtor da classe Vertice
@@ -121,6 +128,16 @@ public class Vertice implements Cloneable {
      */
     public int getQtdeArestas() {
         return arestas.size();
+    }
+
+    public int getNivelArvore() {
+        int nivel_arvore = 0;
+        Vertice v_aux = this;
+        while (v_aux.vertice_pai != null) {
+            nivel_arvore += 1;
+            v_aux = v_aux.vertice_pai;
+        }
+        return nivel_arvore;
     }
 
     /**
