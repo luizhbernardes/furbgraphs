@@ -193,6 +193,8 @@ public class GraphViewer extends JComponent {
     public Vertice vertice_origem = null;
     public Vertice vertice_destino = null;
     public Vertice vertice_black = null;
+    public Aresta aresta_proc = null;
+    public Vertice vertice_proc = null;
 
     public int index_aresta, index_vertice = 0;
     public boolean BFS = false;
@@ -209,6 +211,7 @@ public class GraphViewer extends JComponent {
     public String log_cmp_novo_str = "";
     public String log_cmp_atual_str = "";
     public String log_aresta_str = "";
+    public String str_caminho_antigo = "";
 
     private static class AlgoritmoDesenho {
 
@@ -422,6 +425,9 @@ public class GraphViewer extends JComponent {
         this.vertice_black_list.clear();
         this.vertice_ordem_list.clear();
         this.fila_bfs_list.clear();
+        this.aresta_atual_cmp_list.clear();
+        this.vertice_atual_cmp_list.clear();
+        this.vertice_cmp_list.clear();
 
         this.vertice_aux_stack.clear();
         this.vertice_ordem_visita_stack.clear();
@@ -449,6 +455,8 @@ public class GraphViewer extends JComponent {
 
         this.vertice_remove = null;
         this.vertice_anterior = null;
+        this.aresta_proc = null;
+        this.vertice_proc = null;
         this.check_menor_caminho = false;
 
         if (this.DIJKSTRA) {
@@ -469,6 +477,7 @@ public class GraphViewer extends JComponent {
         } else {
             this.vertice_aux = this.vertice_origem;
         }
+        this.txtLog.setText("");
     }
 
     public void retorna_bfs() {
@@ -698,6 +707,9 @@ public class GraphViewer extends JComponent {
                 this.txtLog.append("EMPILHAMENTO > " + this.empilhamento_dfs_stack + "\n");
             } else {
                 this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(9, 10, 11)));
+                if (!this.vertice_ordem_visita_stack.contains(this.vertice_aux)) {
+                    this.vertice_ordem_visita_stack.push(this.vertice_aux);
+                }
                 this.txtLog.append("VISITANDO VERTICE > " + v_destino.getDado() + "\n");
 
                 System.out.println("VDESTINO: " + v_destino);
@@ -1010,8 +1022,79 @@ public class GraphViewer extends JComponent {
             this.txtLog.append("#################################\nProcessando vertice > " + this.vertice_aux + "\n");
         }
 
-        if (!this.aresta_proc_list.isEmpty()) {
-            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(16)));
+        if (this.aresta_proc != null && this.vertice_proc != null) {
+            if (!this.aresta_atual_cmp_list.isEmpty() && !this.vertice_atual_cmp_list.isEmpty()) {
+                this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(18, 7, 8, 9)));
+                this.txtLog.append("\n######################################\n");
+                this.txtLog.append("#>>>>>>>>>>>> COMPARAÇÃO <<<<<<<<<<<<#\n");
+
+                for (Vertice v : this.vertice_atual_cmp_list) {
+                    this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
+                    this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.blue);
+                }
+                for (Aresta a : this.aresta_atual_cmp_list) {
+                    this.algoritmoDesenho.coresArestas.remove(findArestaVisual(a));
+                    this.algoritmoDesenho.coresArestas.put(findArestaVisual(a), Color.blue);
+                }
+                this.repaint();
+
+                Vertice v_destino = null;
+                Aresta a_destino = null;
+
+                this.txtLog.append("Caminho atual que será comparado: " + this.str_caminho_antigo + "\n");
+
+                this.aresta_atual_cmp_list.clear();
+                this.vertice_atual_cmp_list.clear();
+            } else if (this.vertice_cmp_list.contains(this.vertice_proc)) {
+                this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(18, 7, 8, 9)));
+
+                for (Vertice v : this.vertice_cmp_list) {
+                    this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
+                    this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.cyan);
+                    if (v.aresta_pai != null) {
+                        this.algoritmoDesenho.coresArestas.remove(findArestaVisual(v.aresta_pai));
+                        this.algoritmoDesenho.coresArestas.put(findArestaVisual(v.aresta_pai), Color.cyan);
+                    }
+                }
+
+                this.repaint();
+
+                this.txtLog.append(this.log_cmp_novo_str + "\n");
+
+                this.txtLog.append("#################################\n");
+
+                this.log_cmp_novo_str = "";
+                this.vertice_cmp_list.clear();
+                this.aresta_proc = null;
+                this.vertice_proc = null;
+            } else {
+                this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(18, 7, 8, 9)));
+
+                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_proc));
+                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(this.vertice_proc), Color.cyan);
+
+                this.algoritmoDesenho.coresArestas.remove(findArestaVisual(this.aresta_proc));
+                this.algoritmoDesenho.coresArestas.put(findArestaVisual(this.aresta_proc), Color.cyan);
+
+                this.repaint();
+
+                Vertice v_origem = (this.aresta_proc.getVi().equals(this.vertice_proc) ? this.aresta_proc.getVj() : this.aresta_proc.getVi());
+
+                this.log_cmp_atual_str = "\nVertice " + this.vertice_proc.getDado() + " não possui pai!\n";
+                this.log_cmp_atual_str += "Atribuindo o vertice " + v_origem.getDado() + " como pai de " + this.vertice_proc.getDado() + " | Distância total: " + this.vertice_proc.get_custo() + "\n";
+
+                this.txtLog.append("#################################\n");
+                this.txtLog.append("Caminho novo:\n");
+                this.txtLog.append(this.log_cmp_atual_str + "\n");
+                this.txtLog.append("#################################\n");
+
+                this.vertice_cmp_pai_novo_list.remove(this.vertice_proc);
+                this.aresta_cmp_pai_novo_list.remove(this.aresta_proc);
+                this.aresta_proc = null;
+                this.vertice_proc = null;
+            }
+        } else if (!this.aresta_proc_list.isEmpty()) {
+            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(15, 16)));
 
             Aresta aux = this.aresta_proc_list.get(0);
             this.algoritmoDesenho.arestasMarcadas.add(findArestaVisual(aux));
@@ -1021,99 +1104,9 @@ public class GraphViewer extends JComponent {
 
             Vertice v_destino = (aux.getVi().equals(this.vertice_aux) ? aux.getVj() : aux.getVi());
             this.txtLog.append("Processando a aresta > " + aux.getDado() + " para > " + v_destino.getDado() + "\n");
-
-        } else if (!this.vertice_cmp_pai_atual_list.isEmpty() && !this.aresta_cmp_pai_atual_list.isEmpty()) {
-            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(17, 18)));
-
-            for (Vertice v : this.vertice_atual_cmp_list) {
-                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
-                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.blue);
-            }
-            for (Aresta a : this.aresta_atual_cmp_list) {
-                this.algoritmoDesenho.coresArestas.remove(findArestaVisual(a));
-                this.algoritmoDesenho.coresArestas.put(findArestaVisual(a), Color.blue);
-            }
-            this.repaint();
-
-            Vertice v_destino = null;
-            Aresta a_destino = null;
-            String atual_str = "";
-            for (int x = this.vertice_cmp_pai_atual_list.size(); x > 0; x--) {
-                Vertice v = this.vertice_cmp_pai_atual_list.get(x - 1);
-                for (Aresta a : v.getArestaList()) {
-                    if (this.aresta_cmp_pai_atual_list.contains(a)) {
-                        if (!this.vertice_cmp_pai_atual_list.contains((a.getVi().equals(v) ? a.getVj() : a.getVi()))) {
-                            v_destino = (a.getVi().equals(v) ? a.getVj() : a.getVi());
-                            a_destino = a;
-                        }
-                    }
-                }
-                atual_str += " > " + v.getDado();
-            }
-            if (v_destino != null) {
-                atual_str += " > " + v_destino.getDado();
-            }
-            this.txtLog.append("\n#################################\n");
-            this.txtLog.append("Caminho atual que será comparado: " + atual_str + "\n");
-
-            this.vertice_cmp_pai_atual_list.clear();
-            this.aresta_cmp_pai_atual_list.clear();
-            this.aresta_atual_cmp_list.clear();
-            this.vertice_atual_cmp_list.clear();
-        } else if (!this.vertice_cmp_list.isEmpty()) {
-            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(7, 18)));
-
-            for (Vertice v : this.vertice_cmp_list) {
-                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
-                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.cyan);
-                if (this.vertice_cmp_pai_novo_list.contains(v)) {
-                    this.vertice_cmp_pai_novo_list.remove(v);
-                }
-                if (v.aresta_pai != null) {
-                    if (this.aresta_cmp_pai_novo_list.contains(v.aresta_pai)) {
-                        this.aresta_cmp_pai_novo_list.remove(v.aresta_pai);
-                    }
-                    this.algoritmoDesenho.coresArestas.remove(findArestaVisual(v.aresta_pai));
-                    this.algoritmoDesenho.coresArestas.put(findArestaVisual(v.aresta_pai), Color.cyan);
-                }
-            }
-
-            this.repaint();
-
-            if (!this.log_cmp_novo_str.isEmpty()) {
-                this.txtLog.append("#>>>>>>>>>>>> COMPARAÇÃO <<<<<<<<<<<<#\n");
-                this.txtLog.append(this.log_cmp_novo_str + "\n");
-            }
-
-            this.txtLog.append("#################################\n");
-
-            this.log_cmp_novo_str = "";
-            this.vertice_cmp_list.clear();
-        } else if (!this.vertice_cmp_pai_novo_list.isEmpty() && !this.aresta_cmp_pai_novo_list.isEmpty()) {
-            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(18, 7)));
-
-            for (Vertice v : this.vertice_cmp_pai_novo_list) {
-                this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(v));
-                this.algoritmoDesenho.coresVertices.put(findVerticeVisual(v), Color.cyan);
-            }
-            for (Aresta a : this.aresta_cmp_pai_novo_list) {
-                this.algoritmoDesenho.coresArestas.remove(findArestaVisual(a));
-                this.algoritmoDesenho.coresArestas.put(findArestaVisual(a), Color.cyan);
-            }
-            this.repaint();
-
-            if (!this.log_cmp_atual_str.isEmpty()) {
-                this.txtLog.append("#################################\n");
-                this.txtLog.append("Caminhos novos:\n");
-                this.txtLog.append(this.log_cmp_atual_str + "\n");
-                this.txtLog.append("#################################\n");
-            }
-
-            this.log_cmp_atual_str = "";
-            this.vertice_cmp_pai_novo_list.clear();
-            this.aresta_cmp_pai_novo_list.clear();
+            this.aresta_proc = aux;
+            this.vertice_proc = v_destino;
         } else if (this.check_menor_caminho) {
-            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(8, 9)));
             String str_menor_caminho = "";
             this.txtLog.append("O menor caminho encontrado por vértice:\n");
             for (Vertice v : this.vertice_list) {
@@ -1146,12 +1139,18 @@ public class GraphViewer extends JComponent {
                     }
                 }
             }
+
             this.txtLog.append(str_menor_caminho);
+
+            if (!this.vertice_destino.get_caminho().isEmpty()) {
+                this.txtLog.append("O custo total do vertice > " + this.vertice_origem.getDado() + " para o vertice > " + this.vertice_destino.getDado());
+                this.txtLog.append(" é = " + this.vertice_destino.get_custo() + "\n");
+            }
             this.check_menor_caminho = false;
         } else {
             this.check_menor_caminho = true;
 
-            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(15)));
+            this.formata_linha_alg(new ArrayList<Integer>(Arrays.asList(14)));
 
             if (!this.vertice_ordem_list.isEmpty()) {
                 this.vertice_aux = null;
@@ -1164,7 +1163,7 @@ public class GraphViewer extends JComponent {
                 }
                 this.vertice_ordem_list.remove(this.vertice_aux);
 
-                this.txtLog.append("\n#################################\nProcessando vertice > " + this.vertice_aux.getDado() + "\n");
+                this.txtLog.append("\n#################################\nProcessando vertice > " + this.vertice_aux.getDado() + "\n\n");
 
                 if (this.algoritmoDesenho.verticesMarcados.contains(findVerticeVisual(this.vertice_aux))) {
                     this.algoritmoDesenho.coresVertices.remove(findVerticeVisual(this.vertice_aux));
@@ -1222,7 +1221,7 @@ public class GraphViewer extends JComponent {
                             //Seta o custo como Custo da aresta + Custo do pai
                             v_destino.set_custo(a.getValor() + this.vertice_aux.get_custo());
 
-                            this.log_cmp_atual_str += "Atribuindo o vertice " + this.vertice_aux.getDado() + " como pai de " + v_destino.getDado() + " | Distância total: " + v_destino.get_custo() + "\n";
+                            this.log_cmp_atual_str += "Atribuindo o vertice " + this.vertice_aux.getDado() + " como pai de " + v_destino.getDado() + " | Distância total: " + v_destino.get_custo() + "\n;";
 
                             //Percorre o caminho de vertices do pai novo até a origem
                             this.aresta_cmp_pai_novo_list.add(v_destino.aresta_pai);
@@ -1268,12 +1267,13 @@ public class GraphViewer extends JComponent {
                                 Vertice v_aux = caminho_novo_list.get(x - 1);
                                 str_caminho_novo += " > " + v_aux.getDado();
                             }
-                            String str_caminho_antigo = "";
+                            this.str_caminho_antigo = "";
                             List<Vertice> caminho_antigo = v_destino.get_caminho();
                             for (int x = caminho_antigo.size(); x > 0; x--) {
                                 Vertice v_aux = caminho_antigo.get(x - 1);
-                                str_caminho_antigo += " > " + v_aux.getDado();
+                                this.str_caminho_antigo += " > " + v_aux.getDado();
                             }
+                            this.str_caminho_antigo += " > " + v_destino.getDado();
                             this.vertice_cmp_list = caminho_novo_list;
                             this.vertice_cmp_list.add(v_destino);
 
@@ -1287,7 +1287,7 @@ public class GraphViewer extends JComponent {
                             this.aresta_atual_cmp_list.add(v_destino.aresta_pai);
 
                             this.log_cmp_novo_str += "O caminho " + str_caminho_novo + " > " + this.vertice_aux.getDado() + " > " + v_destino.getDado() + " (Custo = " + (this.vertice_aux.get_custo() + a.getValor()) + ")\n";
-                            this.log_cmp_novo_str += "é menor que o caminho " + str_caminho_antigo + " > " + v_destino.getDado() + " (Custo = " + v_destino.get_custo() + ")??\n";
+                            this.log_cmp_novo_str += "é menor que o caminho " + str_caminho_antigo + " (Custo = " + v_destino.get_custo() + ")??\n";
 
                             if ((this.vertice_aux.get_custo() + a.getValor()) < v_destino.get_custo()) {
                                 this.log_cmp_novo_str += "> Sim\n";
